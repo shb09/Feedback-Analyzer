@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Smart Feedback Analysis</title>
+
+<style>
+:root {
+  --bg: #020617;
+  --panel: #020617;
+  --accent: #22d3ee;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: radial-gradient(circle at top, #0b1120, #020617);
+  color: var(--text);
+}
+
+/* ---------- HEADER ---------- */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(10px);
+  background: rgba(2,6,23,0.7);
+  border-bottom: 1px solid #1e293b;
+  padding: 16px 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+header h1 {
+  font-size: 18px;
+  margin: 0;
+  color: var(--accent);
+}
+
+nav a {
+  margin-left: 24px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+nav a:hover {
+  color: var(--accent);
+}
+
+/* ---------- HERO ---------- */
+.hero {
+  min-height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 40px;
+}
+
+.hero h2 {
+  font-size: 56px;
+  margin-bottom: 20px;
+  line-height: 1.1;
+}
+
+.hero span {
+  color: var(--accent);
+}
+
+.hero p {
+  font-size: 18px;
+  color: var(--muted);
+  max-width: 700px;
+  margin: auto;
+}
+
+.cta {
+  margin-top: 40px;
+}
+
+.cta a {
+  display: inline-block;
+  padding: 14px 36px;
+  border-radius: 30px;
+  background: linear-gradient(135deg, #06b6d4, #22d3ee);
+  color: #020617;
+  font-weight: bold;
+  text-decoration: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.cta a:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px rgba(34,211,238,0.5);
+}
+
+/* ---------- SECTIONS ---------- */
+section {
+  padding: 80px 60px;
+  max-width: 1200px;
+  margin: auto;
+}
+
+.section-title {
+  font-size: 28px;
+  margin-bottom: 40px;
+  color: var(--accent);
+}
+
+/* ---------- FORM ---------- */
+textarea {
+  width: 100%;
+  height: 140px;
+  padding: 14px;
+  background: var(--panel);
+  border: 1px solid #334155;
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 15px;
+}
+
+button {
+  margin-top: 16px;
+  padding: 12px 30px;
+  background: var(--accent);
+  color: #020617;
+  border: none;
+  border-radius: 20px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #67e8f9;
+}
+
+/* ---------- CARDS ---------- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px,1fr));
+  gap: 24px;
+  margin-top: 40px;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid #1e293b;
+  border-radius: 16px;
+  padding: 24px;
+  opacity: 0;
+  transform: translateY(40px);
+  transition: all 0.6s ease;
+}
+
+.card.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.card h3 {
+  color: var(--accent);
+  font-size: 15px;
+  letter-spacing: 1px;
+}
+
+.tag {
+  display: inline-block;
+  margin: 6px 6px 0 0;
+  padding: 6px 14px;
+  background: #0b3b4f;
+  border-radius: 999px;
+  font-size: 13px;
+  color: #bae6fd;
+}
+
+.highlight {
+  margin-top: 20px;
+  color: #22c55e;
+}
+
+/* ---------- FOOTER ---------- */
+footer {
+  text-align: center;
+  padding: 40px;
+  border-top: 1px solid #1e293b;
+  color: #64748b;
+  font-size: 12px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>Smart Feedback Analysis</h1>
+  <nav>
+    <a href="#about">About</a>
+    <a href="#demo">Live Demo</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div>
+    <h2>
+      Automated Qualitative <br>
+      <span>Feedback Intelligence</span>
+    </h2>
+    <p>
+      Transforming messy, unstructured feedback into clear,
+      actionable insights using explainable logic.
+    </p>
+    <div class="cta">
+      <a href="#demo">Launch Interface →</a>
+    </div>
+  </div>
+</div>
+
+<!-- DEMO -->
+<section id="demo">
+  <h2 class="section-title">Live Analysis Interface</h2>
+
+  <form method="POST">
+    <textarea name="feedback" placeholder="type whatever comes to mind... no grammar needed"></textarea><br>
+    <button type="submit">Analyze Feedback</button>
+  </form>
+
+  {% if sentiment %}
+  <div id="results" class="grid reveal">
+    <div class="card">
+      <h3>SENTIMENT</h3>
+      <h2>{{ sentiment }}</h2>
+    </div>
+
+    <div class="card">
+      <h3>CONFIDENCE</h3>
+      <h2>{{ confidence }}%</h2>
+    </div>
+
+    <div class="card">
+      <h3>KEY TOPICS</h3>
+      {% for word, count in keywords %}
+        <span class="tag">{{ word }}</span>
+      {% endfor %}
+    </div>
+
+    <div class="card">
+      <h3>SUGGESTED ACTION</h3>
+      <p>{{ action }}</p>
+    </div>
+  </div>
+
+  {% if reused %}
+    <p class="highlight">
+      ✔ Similar feedback detected. Previous analysis reused to save processing.
+    </p>
+  {% endif %}
+  {% endif %}
+</section>
+
+<footer>
+  Python-based academic prototype · Designed for real-world feedback
+</footer>
+
+<!-- REVEAL + AUTO-SCROLL -->
+<script>
+/* Reveal cards on scroll */
+const cards = document.querySelectorAll(".card");
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add("show");
+    }
+  });
+},{ threshold: 0.2 });
+
+cards.forEach(card => observer.observe(card));
+
+/* Auto-scroll to results after submit */
+window.onload = function () {
+  const results = document.getElementById("results");
+  if (results) {
+    results.scrollIntoView({ behavior: "smooth" });
+  }
+};
+</script>
+
+</body>
+</html>
