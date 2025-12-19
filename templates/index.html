@@ -7,115 +7,153 @@
 <style>
 body {
   margin: 0;
-  font-family: "Segoe UI", sans-serif;
-  background: linear-gradient(135deg, #0f172a, #020617);
-  color: #e5e7eb;
+  font-family: Arial, sans-serif;
+  background: radial-gradient(circle at top, #10192f, #050814);
+  color: #e6ecff;
+}
+
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 44px;
+}
+
+.hero p {
+  max-width: 600px;
+  color: #aab4d4;
+  margin: 20px 0;
+}
+
+.hero button {
+  padding: 14px 36px;
+  border-radius: 12px;
+  background: #4f6ef7;
+  border: none;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.hidden {
+  display: none;
 }
 
 .container {
-  max-width: 900px;
-  margin: auto;
   padding: 80px 20px;
+  display: flex;
+  justify-content: center;
 }
 
 .card {
-  background: rgba(15, 23, 42, 0.9);
-  border-radius: 16px;
-  padding: 30px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
-}
-
-h1 {
-  margin-top: 0;
-  font-size: 28px;
+  width: 620px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 18px;
+  padding: 28px;
 }
 
 textarea {
   width: 100%;
   height: 120px;
   background: #020617;
-  color: #e5e7eb;
+  color: white;
   border-radius: 10px;
-  border: 1px solid #1e293b;
-  padding: 14px;
-  font-size: 15px;
-  resize: none;
+  padding: 12px;
+  border: none;
 }
 
-button {
-  margin-top: 15px;
+button.analyze {
+  margin-top: 16px;
   padding: 10px 22px;
-  background: #3b82f6;
+  border-radius: 10px;
+  background: #5b7cfa;
   border: none;
-  border-radius: 20px;
-  font-size: 14px;
   color: white;
   cursor: pointer;
 }
 
 .result {
-  margin-top: 25px;
+  margin-top: 18px;
 }
 
 .wordcloud {
-  margin-top: 20px;
-  padding: 15px;
+  margin-top: 16px;
+  padding: 16px;
   background: #020617;
   border-radius: 12px;
-  min-height: 120px;
+  min-height: 90px;
 }
 
-.wordcloud span {
+.word {
   display: inline-block;
   margin: 6px;
-  font-weight: 600;
-  text-shadow: 0 0 6px rgba(96,165,250,0.4);
-}
-
-footer {
-  margin-top: 60px;
-  text-align: center;
-  font-size: 12px;
-  color: #94a3b8;
+  font-weight: bold;
 }
 </style>
 </head>
 
 <body>
-<div class="container">
+
+<!-- HERO -->
+<div class="hero" id="hero">
+  <h1>Smart Feedback Analysis</h1>
+  <p>Analyze casual, unstructured feedback using sentiment, confidence estimation and visual word clouds.</p>
+  <button id="launchBtn">Launch Interface</button>
+</div>
+
+<!-- ANALYZER -->
+<div class="container hidden" id="analyzer">
   <div class="card">
-    <h1>Live Feedback Analyzer</h1>
+    <h2>Live Feedback Analyzer</h2>
 
     <form method="POST">
-      <textarea name="feedback" placeholder="type anything… slang, emotions, no grammar needed"></textarea>
+      <textarea name="feedback" placeholder="type anything... slang, emotions, no grammar needed"></textarea>
       <br>
-      <button type="submit">Analyze Feedback</button>
+      <button class="analyze" type="submit">Analyze Feedback</button>
     </form>
 
     {% if sentiment %}
     <div class="result">
+      {% if repeated %}
+        <p style="color:#f5a623;">⚠ Feedback already analyzed earlier</p>
+      {% endif %}
+
       <p><strong>Sentiment:</strong> {{ sentiment }}</p>
       <p><strong>Confidence:</strong> {{ confidence }}%</p>
 
       <div class="wordcloud">
-        {% set colors = ["#60a5fa", "#34d399", "#fbbf24", "#f87171", "#a78bfa"] %}
-        {% for w, c in words %}
-          <span style="
-            font-size: {{ 14 + c*6 }}px;
-            color: {{ colors[loop.index0 % colors|length] }};
-            transform: rotate({{ 10 if loop.index is divisibleby 4 else 0 }}deg);
-          ">
-            {{ w }}
+        {% for w in wordcloud %}
+          <span class="word" style="font-size:{{w.size}}px; color:{{w.color}};">
+            {{ w.word }}
           </span>
         {% endfor %}
       </div>
     </div>
     {% endif %}
   </div>
-
-  <footer>
-    Academic prototype • No personal data stored • Demo purpose only
-  </footer>
 </div>
+
+<footer style="text-align:center; padding:40px; color:#7f89b5;">
+  Academic prototype • No personal data stored • Demo purpose only
+</footer>
+
+<script>
+const launchBtn = document.getElementById("launchBtn");
+const hero = document.getElementById("hero");
+const analyzer = document.getElementById("analyzer");
+
+launchBtn.onclick = () => {
+  hero.style.display = "none";
+  analyzer.classList.remove("hidden");
+  analyzer.scrollIntoView({behavior:"smooth"});
+};
+</script>
+
 </body>
 </html>

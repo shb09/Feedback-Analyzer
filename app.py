@@ -1,71 +1,87 @@
 from flask import Flask, render_template, request
+import hashlib
 import re
 from collections import Counter
+import random
 
 app = Flask(__name__)
 
-POSITIVE_WORDS = {
-    "good", "great", "awesome", "nice", "love", "excellent",
-    "amazing", "cool", "smooth", "perfect", "happy", "fast"
+# Store analyzed feedback hashes (demo purpose only)
+analyzed_feedback = set()
+
+positive_words = {
+    "good", "great", "love", "awesome", "nice", "amazing",
+    "smooth", "fast", "cool", "perfect", "clean", "excellent"
 }
 
-NEGATIVE_WORDS = {
-    "bad", "worst", "slow", "boring", "hate", "confusing",
-    "buggy", "lag", "crash", "poor", "terrible", "annoying"
+negative_words = {
+    "bad", "hate", "slow", "lag", "bug", "issue",
+    "problem", "worst", "crash", "ruins", "delay"
 }
 
-STOPWORDS = {
-    "the", "is", "and", "it", "this", "that", "to", "for",
-    "of", "on", "in", "just", "very", "really"
-}
+
+def analyze_sentiment(text):
+    words = re.findall(r"\b[a-z]+\b", text.lower())
+
+    pos = sum(1 for w in words if w in positive_words)
+    neg = sum(1 for w in words if w in negative_words)
+
+    if pos > neg:
+        sentiment = "Positive"
+    elif neg > pos:
+        sentiment = "Negative"
+    else:
+        sentiment = "Neutral"
+
+    confidence = min(95, max(40, abs(pos - neg) * 20 + 40))
+    return sentiment, confidence, words
+
+
+def build_wordcloud(words):
+    ignore = positive_words | negative_words
+    filtered = [w for w in words if w not in ignore and len(w) > 2]
+
+    freq = Counter(filtered).most_common(12)
+
+    colors = ["#7aa2f7", "#9ece6a", "#f7768e", "#e0af68", "#bb9af7"]
+
+    cloud = []
+    for word, count in freq:
+        cloud.append({
+            "word": word,
+            "size": min(50, 14 + count * 6),
+            "color": random.choice(colors)
+        })
+    return cloud
 
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    sentiment = None
-    confidence = None
-    words = []
+    sentiment = confidence = None
+    wordcloud = []
+    repeated = False
 
     if request.method == "POST":
-        text = request.form.get("feedback", "").lower()
+        feedback = request.form.get("feedback", "").strip()
 
-        tokens = re.findall(r"[a-zA-Z]{3,}", text)
-        tokens = [w for w in tokens if w not in STOPWORDS]
+        if feedback:
+            hash_val = hashlib.md5(feedback.lower().encode()).hexdigest()
 
-        score = 0
-        matched = 0
-
-        for w in tokens:
-            if w in POSITIVE_WORDS:
-                score += 1
-                matched += 1
-            elif w in NEGATIVE_WORDS:
-                score -= 1
-                matched += 1
-
-        # 🔥 FIXED SENTIMENT LOGIC
-        if matched == 1:
-            sentiment = "Positive" if score > 0 else "Negative"
-            confidence = 70
-        elif matched > 1:
-            if score > 0:
-                sentiment = "Positive"
-            elif score < 0:
-                sentiment = "Negative"
+            if hash_val in analyzed_feedback:
+                repeated = True
+                sentiment = "Already Analyzed"
+                confidence = 100
             else:
-                sentiment = "Neutral"
-            confidence = min(95, 50 + matched * 10)
-        else:
-            sentiment = "Neutral"
-            confidence = 40
-
-        words = Counter(tokens).most_common(15)
+                analyzed_feedback.add(hash_val)
+                sentiment, confidence, words = analyze_sentiment(feedback)
+                wordcloud = build_wordcloud(words)
 
     return render_template(
         "index.html",
         sentiment=sentiment,
         confidence=confidence,
-        words=words
+        wordcloud=wordcloud,
+        repeated=repeated
     )
 
 
