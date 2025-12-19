@@ -1,81 +1,70 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 import re
 from collections import Counter
-import os
 
 app = Flask(__name__)
 
-# Memory for repeated feedback detection
-seen_feedback = set()
-
-# Casual sentiment words
-POSITIVE_WORDS = {
-    "love", "loved", "awesome", "great", "good", "nice",
-    "amazing", "cool", "slaps", "smooth", "fast", "clean"
+# Expanded casual sentiment words
+POSITIVE = {
+    "good","great","love","awesome","nice","cool","helpful","amazing",
+    "fine","ok","okay","useful","liked","smooth","works","fun"
 }
 
-NEGATIVE_WORDS = {
-    "hate", "slow", "lag", "laggy", "bug", "buggy", "bad",
-    "worst", "annoying", "meh", "crash", "crashes", "issue"
+NEGATIVE = {
+    "bad","hate","slow","buggy","confusing","empty","meh","boring",
+    "annoying","issue","problem","lag","weird","broken","frustrating"
 }
 
-@app.route("/", methods=["GET", "POST"])
-def index():
-    sentiment = None
-    confidence = None
-    wordcloud_data = []
-    warning = None
-    repeated = False
+STOPWORDS = {
+    "the","is","it","this","that","to","and","a","of","for","in","on",
+    "but","sometimes","just","feels","idk","why"
+}
 
-    if request.method == "POST":
-        text = request.form.get("feedback", "")
+@app.route("/", methods=["GET"])
+def home():
+    return render_template("index.html")
 
-        # 1️⃣ Empty input handling
-        if not text.strip():
-            warning = "⚠ Please enter meaningful feedback (not empty input)."
-            return render_template("index.html", warning=warning)
+@app.route("/", methods=["POST"])
+def analyze():
+    text = request.form.get("text", "").lower()
 
-        clean_text = text.lower().strip()
+    if not text.strip():
+        return jsonify({
+            "sentiment": "Neutral",
+            "confidence": 0,
+            "wordcloud": []
+        })
 
-        # 2️⃣ Repeated feedback detection
-        if clean_text in seen_feedback:
-            repeated = True
-        else:
-            seen_feedback.add(clean_text)
+    words = re.findall(r"[a-z']+", text)
 
-        # Tokenization
-        words = re.findall(r"\b[a-zA-Z]{2,}\b", clean_text)
+    score = 0
+    matched = 0
 
-        pos_count = sum(1 for w in words if w in POSITIVE_WORDS)
-        neg_count = sum(1 for w in words if w in NEGATIVE_WORDS)
-        signal = pos_count + neg_count
+    for w in words:
+        if w in POSITIVE:
+            score += 1
+            matched += 1
+        elif w in NEGATIVE:
+            score -= 1
+            matched += 1
 
-        # 3️⃣ Sentiment + confidence logic
-        if signal == 0:
-            sentiment = "Neutral 😐"
-            confidence = 40
-        elif pos_count > neg_count:
-            sentiment = "Positive 😊"
-            confidence = min(90, 50 + pos_count * 10)
-        elif neg_count > pos_count:
-            sentiment = "Negative 😠"
-            confidence = min(90, 50 + neg_count * 10)
-        else:
-            sentiment = "Neutral 😐"
-            confidence = 50
+    if score > 0:
+        sentiment = "Positive"
+    elif score < 0:
+        sentiment = "Negative"
+    else:
+        sentiment = "Neutral"
 
-        # 4️⃣ Word cloud data
-        wordcloud_data = Counter(words).most_common(12)
+    confidence = min(100, max(30, int((abs(score) / max(1, matched)) * 100)))
 
-    return render_template(
-        "index.html",
-        sentiment=sentiment,
-        confidence=confidence,
-        wordcloud_data=wordcloud_data,
-        warning=warning,
-        repeated=repeated
-    )
+    filtered = [w for w in words if w not in STOPWORDS and len(w) > 3]
+    counts = Counter(filtered).most_common(20)
+
+    return jsonify({
+        "sentiment": sentiment,
+        "confidence": confidence,
+        "wordcloud": counts
+    })
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=5000, debug=True)
