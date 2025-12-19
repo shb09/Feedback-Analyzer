@@ -101,27 +101,34 @@ button.analyze {
 <body>
 
 <!-- HERO -->
-<div class="hero" id="hero">
+<div class="hero {% if launched %}hidden{% endif %}" id="hero">
   <h1>Smart Feedback Analysis</h1>
-  <p>Analyze casual, unstructured feedback using sentiment, confidence estimation and visual word clouds.</p>
+  <p>
+    Analyze unstructured, casual feedback using sentiment,
+    confidence estimation and visual word clouds.
+  </p>
   <button id="launchBtn">Launch Interface</button>
 </div>
 
 <!-- ANALYZER -->
-<div class="container hidden" id="analyzer">
+<div class="container {% if not launched %}hidden{% endif %}" id="analyzer">
   <div class="card">
     <h2>Live Feedback Analyzer</h2>
 
     <form method="POST">
-      <textarea name="feedback" placeholder="type anything... slang, emotions, no grammar needed"></textarea>
+      <textarea name="feedback"
+        placeholder="type anything... slang, emotions, no grammar needed"></textarea>
       <br>
       <button class="analyze" type="submit">Analyze Feedback</button>
     </form>
 
     {% if sentiment %}
     <div class="result">
+
       {% if repeated %}
-        <p style="color:#f5a623;">⚠ Feedback already analyzed earlier</p>
+        <p style="color:#f5a623;">
+          ⚠ This feedback was already analyzed earlier
+        </p>
       {% endif %}
 
       <p><strong>Sentiment:</strong> {{ sentiment }}</p>
@@ -129,7 +136,8 @@ button.analyze {
 
       <div class="wordcloud">
         {% for w in wordcloud %}
-          <span class="word" style="font-size:{{w.size}}px; color:{{w.color}};">
+          <span class="word"
+                style="font-size:{{w.size}}px; color:{{w.color}};">
             {{ w.word }}
           </span>
         {% endfor %}
@@ -148,11 +156,13 @@ const launchBtn = document.getElementById("launchBtn");
 const hero = document.getElementById("hero");
 const analyzer = document.getElementById("analyzer");
 
-launchBtn.onclick = () => {
-  hero.style.display = "none";
-  analyzer.classList.remove("hidden");
-  analyzer.scrollIntoView({behavior:"smooth"});
-};
+if (launchBtn) {
+  launchBtn.onclick = () => {
+    hero.classList.add("hidden");
+    analyzer.classList.remove("hidden");
+    analyzer.scrollIntoView({behavior:"smooth"});
+  };
+}
 </script>
 
 </body>

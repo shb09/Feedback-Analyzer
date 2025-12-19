@@ -6,7 +6,7 @@ import random
 
 app = Flask(__name__)
 
-# Store analyzed feedback hashes (demo purpose only)
+# Store analyzed feedback (for demo purpose)
 analyzed_feedback = set()
 
 positive_words = {
@@ -16,7 +16,7 @@ positive_words = {
 
 negative_words = {
     "bad", "hate", "slow", "lag", "bug", "issue",
-    "problem", "worst", "crash", "ruins", "delay"
+    "problem", "worst", "crash", "ruins", "delay", "annoying"
 }
 
 
@@ -38,18 +38,14 @@ def analyze_sentiment(text):
 
 
 def build_wordcloud(words):
-    ignore = positive_words | negative_words
-    filtered = [w for w in words if w not in ignore and len(w) > 2]
-
-    freq = Counter(filtered).most_common(12)
-
+    freq = Counter(words).most_common(12)
     colors = ["#7aa2f7", "#9ece6a", "#f7768e", "#e0af68", "#bb9af7"]
 
     cloud = []
     for word, count in freq:
         cloud.append({
             "word": word,
-            "size": min(50, 14 + count * 6),
+            "size": min(46, 14 + count * 6),
             "color": random.choice(colors)
         })
     return cloud
@@ -60,8 +56,10 @@ def index():
     sentiment = confidence = None
     wordcloud = []
     repeated = False
+    launched = False
 
     if request.method == "POST":
+        launched = True
         feedback = request.form.get("feedback", "").strip()
 
         if feedback:
@@ -81,7 +79,8 @@ def index():
         sentiment=sentiment,
         confidence=confidence,
         wordcloud=wordcloud,
-        repeated=repeated
+        repeated=repeated,
+        launched=launched
     )
 
 
