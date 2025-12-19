@@ -1,90 +1,56 @@
-from flask import Flask, render_template, request
+import os
 import re
+from flask import Flask, render_template, request
 from collections import Counter
 
 app = Flask(__name__)
 
-# Simple in-memory cache (faculty idea)
-processed_feedback = {}
-
-positive_words = [
-    "good", "excellent", "nice", "helpful", "clean", "great", "easy", "useful"
-]
-
-negative_words = [
-    "bad", "poor", "declined", "dirty", "slow", "worst", "problem", "issue"
-]
-
-def analyze_sentiment(text):
-    score = 0
-    for w in positive_words:
-        if w in text:
-            score += 1
-    for w in negative_words:
-        if w in text:
-            score -= 1
-
-    if score > 0:
-        return "Positive"
-    elif score < 0:
-        return "Negative"
-    else:
-        return "Neutral"
-
-def extract_keywords(text):
-    words = re.findall(r'\b[a-zA-Z]{4,}\b', text.lower())
-    stopwords = {"this", "that", "with", "from", "have", "has", "been", "very"}
-    words = [w for w in words if w not in stopwords]
-    return Counter(words).most_common(8)
-
-def suggest_action(keywords):
-    topics = [word for word, _ in keywords]
-
-    if any(w in topics for w in ["food", "cafeteria", "canteen"]):
-        return "Recommend cafeteria quality inspection."
-    elif any(w in topics for w in ["library", "books", "study"]):
-        return "Consider upgrading library resources."
-    elif any(w in topics for w in ["wifi", "internet", "network"]):
-        return "IT infrastructure review suggested."
-    elif any(w in topics for w in ["faculty", "teacher", "lecture"]):
-        return "Academic quality review recommended."
-    else:
-        return "General feedback detected. Monitor trends."
-
 @app.route("/", methods=["GET", "POST"])
 def index():
     sentiment = None
+    score = 0
     keywords = []
-    action = None
-    confidence = None
-    reused = False
 
     if request.method == "POST":
-        feedback = request.form.get("feedback", "").strip().lower()
+        text = request.form.get("feedback", "").lower()
 
-        if feedback in processed_feedback:
-            # reuse previous analysis
-            reused = True
-            sentiment, keywords, action, confidence = processed_feedback[feedback]
+        # Casual + real-world words (NOT academic)
+        positive_words = [
+            "good", "nice", "love", "awesome", "great", "fun", "cool",
+            "fast", "smooth", "easy", "happy", "amazing", "enjoyed"
+        ]
+        negative_words = [
+            "bad", "hate", "worst", "boring", "slow", "buggy", "confusing",
+            "annoying", "terrible", "lag", "crash", "problem"
+        ]
+
+        for word in positive_words:
+            if word in text:
+                score += 1
+
+        for word in negative_words:
+            if word in text:
+                score -= 1
+
+        if score > 0:
+            sentiment = "Positive 😊"
+        elif score < 0:
+            sentiment = "Negative 😠"
         else:
-            sentiment = analyze_sentiment(feedback)
-            keywords = extract_keywords(feedback)
-            action = suggest_action(keywords)
-            confidence = min(95, 50 + len(keywords) * 5)
+            sentiment = "Neutral 😐"
 
-            processed_feedback[feedback] = (
-                sentiment, keywords, action, confidence
-            )
+        # Extract meaningful keywords (unstructured)
+        words = re.findall(r'\b[a-zA-Z]{4,}\b', text)
+        keywords = Counter(words).most_common(8)
 
     return render_template(
         "index.html",
         sentiment=sentiment,
-        keywords=keywords,
-        action=action,
-        confidence=confidence,
-        reused=reused
+        score=score,
+        keywords=keywords
     )
 
+
 if __name__ == "__main__":
-    print("Starting Flask server...")
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
